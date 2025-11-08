@@ -568,9 +568,9 @@ const Home = () => {
                       <span className="text-gray-700 font-medium">Saturday</span>
                       <span className="font-bold text-green-600">8:00 AM - 4:00 PM</span>
                     </div>
-                    <div className="flex justify-between items-center p-3 rounded-xl bg-gradient-to-r from-gray-50 to-red-50">
+                    <div className="flex justify-between items-center p-3 rounded-xl bg-gradient-to-r from-gray-50 to-purple-50">
                       <span className="text-gray-700 font-medium">Sunday</span>
-                      <span className="font-bold text-red-600">Closed</span>
+                      <span className="font-bold text-purple-600">8:00 AM - 4:00 PM</span>
                     </div>
                   </div>
                 </div>

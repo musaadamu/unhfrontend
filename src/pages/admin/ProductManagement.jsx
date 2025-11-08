@@ -3,6 +3,7 @@ import { Plus, Edit, Trash2, Search, Eye, Star } from 'lucide-react';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
 import ProductFormModal from '../../components/admin/ProductFormModal';
+import { API_URL } from '../../config/api';
 
 const ProductManagement = () => {
   const { token } = useSelector((state) => state.auth);
@@ -23,7 +24,7 @@ const ProductManagement = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/products?limit=1000');
+      const response = await axios.get(`${API_URL}/api/products?limit=1000`);
       setProducts(response.data.products || []);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -35,7 +36,7 @@ const ProductManagement = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/categories');
+      const response = await axios.get(`${API_URL}/api/categories`);
       setCategories(response.data.categories || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -44,7 +45,7 @@ const ProductManagement = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/products/${id}`, {
+      await axios.delete(`${API_URL}/api/products/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert('Product deleted successfully');

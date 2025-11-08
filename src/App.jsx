@@ -29,6 +29,8 @@ import Checkout from './pages/Checkout';
 import LoginForm from './components/auth/LoginForm';
 import RegisterForm from './components/auth/RegisterForm';
 import ProfilePage from './pages/ProfilePage';
+import Services from './pages/Services';
+import About from './pages/About';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -90,11 +92,10 @@ function App() {
             <Route path="messages" element={<MessageManagement />} />
           </Route>
 
-          {/* Placeholder Routes */}
+          {/* Other Public Routes */}
           <Route path="/contact" element={<Contact />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/services" element={<div className="p-8"><h1 className="text-3xl font-bold">Services Page</h1></div>} />
-          <Route path="/about" element={<div className="p-8"><h1 className="text-3xl font-bold">About Page</h1></div>} />
+          <Route path="/services" element={<Services />} />
+          <Route path="/about" element={<About />} />
           <Route path="/unauthorized" element={<div className="p-8"><h1 className="text-3xl font-bold text-red-600">Unauthorized Access</h1></div>} />
           </Routes>
 
