@@ -31,8 +31,8 @@ const getBaseUrl = () => {
   const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
 
   if (isProduction) {
-    // Production - update this when you deploy
-    return 'https://your-backend-url.com';
+    // Production - backend deployed on Render
+    return 'https://unhbackend.onrender.com';
   }
 
   // For local development

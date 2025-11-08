@@ -38,11 +38,9 @@ const Cart = () => {
   const handleCheckout = () => {
     if (!user) {
       toast.info('Please login to proceed to checkout');
-      navigate('/login', { state: { from: '/cart' } });
+      navigate('/login', { state: { from: '/checkout' } });
     } else {
-      // Navigate to checkout page (to be created)
-      toast.info('Checkout feature coming soon!');
-      // navigate('/checkout');
+      navigate('/checkout');
     }
   };
 

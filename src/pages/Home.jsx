@@ -19,6 +19,7 @@ import { useDispatch } from 'react-redux';
 import { addToCart } from '../redux/slices/cartSlice';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { API_URL } from '../config/api';
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -40,7 +41,7 @@ const Home = () => {
 
   const fetchFeaturedProducts = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/products?featured=true&limit=6');
+      const response = await axios.get(`${API_URL}/api/products?featured=true&limit=6`);
       console.log('API Response:', response.data); // Debug log
       setFeaturedProducts(response.data.products || response.data.data || []);
     } catch (error) {

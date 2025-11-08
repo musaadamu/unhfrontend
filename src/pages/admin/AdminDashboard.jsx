@@ -16,6 +16,7 @@ import {
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../redux/slices/authSlice';
 import axios from 'axios';
+import { API_URL } from '../../config/api';
 
 const AdminDashboard = () => {
   const location = useLocation();
@@ -36,10 +37,10 @@ const AdminDashboard = () => {
   const fetchStats = async () => {
     try {
       const [productsRes, categoriesRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/products?limit=1000'),
-        axios.get('http://localhost:5000/api/categories')
+        axios.get(`${API_URL}/api/products?limit=1000`),
+        axios.get(`${API_URL}/api/categories`)
       ]);
-      
+
       setStats({
         totalProducts: productsRes.data.total || 0,
         totalCategories: categoriesRes.data.count || 0,

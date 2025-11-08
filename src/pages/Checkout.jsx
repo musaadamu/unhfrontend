@@ -15,6 +15,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { clearCart } from '../redux/slices/cartSlice';
+import { API_URL } from '../config/api';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -132,11 +133,11 @@ const Checkout = () => {
       // Prepare order data
       const orderData = {
         items: items.map(item => ({
-          product: item._id,
+          product: item.productId,
           name: item.name,
           price: item.price,
           quantity: item.quantity,
-          image: item.images?.[0]?.url || ''
+          image: item.image || ''
         })),
         shippingAddress: {
           fullName: formData.fullName,
@@ -155,7 +156,7 @@ const Checkout = () => {
       };
 
       const response = await axios.post(
-        'http://localhost:5000/api/orders',
+        `${API_URL}/api/orders`,
         orderData,
         {
           headers: {
@@ -379,7 +380,176 @@ const Checkout = () => {
                 </div>
               </div>
 
-              {/* Payment Method - Continued in next part */}
+              {/* Payment Method */}
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                  <CreditCard className="w-6 h-6 text-blue-600" />
+                  Payment Method
+                </h2>
+
+                <div className="space-y-4">
+                  <label className="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="cash"
+                      checked={formData.paymentMethod === 'cash'}
+                      onChange={handleInputChange}
+                      className="w-5 h-5 text-blue-600"
+                    />
+                    <div className="ml-4">
+                      <p className="font-semibold text-gray-800">Cash on Delivery</p>
+                      <p className="text-sm text-gray-600">Pay when you receive your order</p>
+                    </div>
+                  </label>
+
+                  <label className="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="transfer"
+                      checked={formData.paymentMethod === 'transfer'}
+                      onChange={handleInputChange}
+                      className="w-5 h-5 text-blue-600"
+                    />
+                    <div className="ml-4">
+                      <p className="font-semibold text-gray-800">Bank Transfer</p>
+                      <p className="text-sm text-gray-600">Transfer to our bank account</p>
+                    </div>
+                  </label>
+
+                  <label className="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="card"
+                      checked={formData.paymentMethod === 'card'}
+                      onChange={handleInputChange}
+                      className="w-5 h-5 text-blue-600"
+                    />
+                    <div className="ml-4">
+                      <p className="font-semibold text-gray-800">Debit/Credit Card</p>
+                      <p className="text-sm text-gray-600">Pay securely with your card</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Order Notes */}
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <h2 className="text-xl font-bold text-gray-800 mb-4">
+                  Order Notes (Optional)
+                </h2>
+                <textarea
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleInputChange}
+                  rows="4"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  placeholder="Any special instructions for your order?"
+                />
+              </div>
+            </div>
+
+            {/* Right Column - Order Summary */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-xl shadow-md p-6 sticky top-4">
+                <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                  <ShoppingBag className="w-6 h-6 text-blue-600" />
+                  Order Summary
+                </h2>
+
+                {/* Cart Items */}
+                <div className="space-y-4 mb-6 max-h-64 overflow-y-auto">
+                  {items.map((item) => (
+                    <div key={item.productId} className="flex gap-3">
+                      <img
+                        src={`/images/products/${item.image}`}
+                        alt={item.name}
+                        className="w-16 h-16 object-cover rounded-lg"
+                        onError={(e) => {
+                          e.target.src = 'https://via.placeholder.com/150?text=No+Image';
+                        }}
+                      />
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-800 text-sm">{item.name}</p>
+                        <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+                        <p className="text-sm font-bold text-blue-600">
+                          ₦{(item.price * item.quantity).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Price Breakdown */}
+                <div className="border-t border-gray-200 pt-4 space-y-3">
+                  <div className="flex justify-between text-gray-600">
+                    <span>Subtotal ({itemCount} items)</span>
+                    <span className="font-semibold">₦{total.toLocaleString()}</span>
+                  </div>
+
+                  <div className="flex justify-between text-gray-600">
+                    <span>Shipping Fee</span>
+                    <span className="font-semibold">
+                      {shippingFee === 0 ? (
+                        <span className="text-green-600">FREE</span>
+                      ) : (
+                        `₦${shippingFee.toLocaleString()}`
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between text-gray-600">
+                    <span>Tax (7.5%)</span>
+                    <span className="font-semibold">₦{tax.toLocaleString()}</span>
+                  </div>
+
+                  {shippingFee === 0 && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <p className="text-sm text-green-700 font-semibold">
+                        🎉 You've qualified for FREE shipping!
+                      </p>
+                    </div>
+                  )}
+
+                  {total < 50000 && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <p className="text-sm text-blue-700">
+                        Add ₦{(50000 - total).toLocaleString()} more for FREE shipping
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="border-t border-gray-300 pt-3 flex justify-between text-lg font-bold">
+                    <span>Total</span>
+                    <span className="text-blue-600">₦{grandTotal.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                {/* Place Order Button */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full mt-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-6 h-6" />
+                      Place Order
+                    </>
+                  )}
+                </button>
+
+                <p className="text-xs text-gray-500 text-center mt-4">
+                  By placing your order, you agree to our terms and conditions
+                </p>
+              </div>
             </div>
           </div>
         </form>

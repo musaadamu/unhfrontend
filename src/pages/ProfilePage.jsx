@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { updateUserProfile, updatePassword } from '../redux/slices/authSlice';
-import { User, Mail, Phone, MapPin, Lock, Loader } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Lock, Loader, ShoppingBag, Package } from 'lucide-react';
 import { toast } from 'react-toastify';
+import axios from 'axios';
+import { API_URL } from '../config/api';
 
 const ProfileSchema = Yup.object().shape({
   name: Yup.string()
@@ -36,6 +38,8 @@ const ProfilePage = () => {
   const dispatch = useDispatch();
   const { user, loading } = useSelector((state) => state.auth);
   const [activeTab, setActiveTab] = useState('profile');
+  const [orders, setOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
 
   const handleProfileUpdate = async (values, { setSubmitting }) => {
     try {
@@ -63,6 +67,33 @@ const ProfilePage = () => {
     }
   };
 
+  // Fetch user orders
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (activeTab === 'orders') {
+        setLoadingOrders(true);
+        try {
+          const token = localStorage.getItem('token');
+          const response = await axios.get(`${API_URL}/api/orders/my-orders`, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          if (response.data.success) {
+            setOrders(response.data.orders);
+          }
+        } catch (error) {
+          console.error('Error fetching orders:', error);
+          toast.error('Failed to load orders');
+        } finally {
+          setLoadingOrders(false);
+        }
+      }
+    };
+
+    fetchOrders();
+  }, [activeTab]);
+
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
@@ -87,6 +118,16 @@ const ProfilePage = () => {
                 }`}
               >
                 Profile Information
+              </button>
+              <button
+                onClick={() => setActiveTab('orders')}
+                className={`px-6 py-3 text-sm font-medium border-b-2 ${
+                  activeTab === 'orders'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                My Orders
               </button>
               <button
                 onClick={() => setActiveTab('password')}
@@ -342,6 +383,100 @@ const ProfilePage = () => {
                   </Form>
                 )}
               </Formik>
+            )}
+
+            {activeTab === 'orders' && (
+              <div>
+                {loadingOrders ? (
+                  <div className="flex justify-center items-center py-12">
+                    <Loader className="animate-spin h-8 w-8 text-primary-600" />
+                  </div>
+                ) : orders.length === 0 ? (
+                  <div className="text-center py-12">
+                    <ShoppingBag className="mx-auto h-12 w-12 text-gray-400" />
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">No orders yet</h3>
+                    <p className="mt-1 text-sm text-gray-500">Start shopping to see your orders here.</p>
+                    <div className="mt-6">
+                      <a
+                        href="/products"
+                        className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                      >
+                        Browse Products
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {orders.map((order) => (
+                      <div key={order._id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <p className="text-sm text-gray-600">Order Number</p>
+                            <p className="text-lg font-semibold text-gray-900">{order.orderNumber}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm text-gray-600">Order Date</p>
+                            <p className="text-sm font-medium text-gray-900">
+                              {new Date(order.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="border-t border-gray-200 pt-4">
+                          <div className="flex justify-between items-center mb-3">
+                            <div className="flex items-center gap-2">
+                              <Package className="h-5 w-5 text-gray-400" />
+                              <span className="text-sm text-gray-600">
+                                {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
+                              </span>
+                            </div>
+                            <div>
+                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                order.orderStatus === 'delivered' ? 'bg-green-100 text-green-800' :
+                                order.orderStatus === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                order.orderStatus === 'shipped' ? 'bg-blue-100 text-blue-800' :
+                                'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1)}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2 mb-4">
+                            {order.items.slice(0, 2).map((item, index) => (
+                              <div key={index} className="flex justify-between text-sm">
+                                <span className="text-gray-600">{item.name} x {item.quantity}</span>
+                                <span className="font-medium text-gray-900">₦{(item.price * item.quantity).toLocaleString()}</span>
+                              </div>
+                            ))}
+                            {order.items.length > 2 && (
+                              <p className="text-sm text-gray-500">+ {order.items.length - 2} more items</p>
+                            )}
+                          </div>
+
+                          <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-600">Total Amount</span>
+                            <span className="text-lg font-bold text-primary-600">₦{order.total.toLocaleString()}</span>
+                          </div>
+
+                          <div className="mt-4 flex gap-3">
+                            <span className={`text-xs px-2 py-1 rounded ${
+                              order.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' :
+                              order.paymentStatus === 'failed' ? 'bg-red-100 text-red-700' :
+                              'bg-gray-100 text-gray-700'
+                            }`}>
+                              Payment: {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
+                            </span>
+                            <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">
+                              {order.paymentMethod.charAt(0).toUpperCase() + order.paymentMethod.slice(1)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>

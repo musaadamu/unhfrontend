@@ -5,6 +5,7 @@ import { useDispatch } from 'react-redux';
 import { addToCart } from '../redux/slices/cartSlice';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { API_URL } from '../config/api';
 
 const Products = () => {
   const dispatch = useDispatch();
@@ -36,7 +37,7 @@ const Products = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      let url = 'http://localhost:5000/api/products?';
+      let url = `${API_URL}/api/products?`;
 
       if (selectedCategory && selectedCategory !== 'All') {
         url += `category=${selectedCategory}&`;
