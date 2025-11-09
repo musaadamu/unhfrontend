@@ -170,9 +170,10 @@ const Checkout = () => {
         const order = response.data.order;
         setOrderNumber(order.orderNumber);
 
-        // If payment method is card (Paystack), initialize payment
+        // If payment method is Paystack, initialize payment
         if (formData.paymentMethod === 'paystack') {
           try {
+            console.log('Initializing Paystack payment...');
             const paymentResponse = await axios.post(
               `${API_URL}/api/payment/paystack/initialize`,
               {
@@ -199,8 +200,11 @@ const Checkout = () => {
               }
             );
 
-            if (paymentResponse.data.success) {
+            console.log('Paystack response:', paymentResponse.data);
+
+            if (paymentResponse.data.success && paymentResponse.data.data.authorization_url) {
               // Redirect to Paystack payment page
+              console.log('Redirecting to Paystack:', paymentResponse.data.data.authorization_url);
               window.location.href = paymentResponse.data.data.authorization_url;
             } else {
               toast.error('Failed to initialize payment. Please try again.');
@@ -208,14 +212,17 @@ const Checkout = () => {
             }
           } catch (paymentError) {
             console.error('Payment initialization error:', paymentError);
-            toast.error('Failed to initialize payment. Your order has been created but payment is pending.');
+            console.error('Error details:', paymentError.response?.data);
+            toast.error(paymentError.response?.data?.message || 'Failed to initialize payment. Your order has been created but payment is pending.');
             setOrderPlaced(true);
             dispatch(clearCart());
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            setLoading(false);
           }
         } else if (formData.paymentMethod === 'remita') {
           // Initialize Remita payment
           try {
+            console.log('Initializing Remita payment...');
             const paymentResponse = await axios.post(
               `${API_URL}/api/payment/remita/initialize`,
               {
@@ -233,8 +240,11 @@ const Checkout = () => {
               }
             );
 
-            if (paymentResponse.data.success) {
+            console.log('Remita response:', paymentResponse.data);
+
+            if (paymentResponse.data.success && paymentResponse.data.data.payment_url) {
               // Redirect to Remita payment page
+              console.log('Redirecting to Remita:', paymentResponse.data.data.payment_url);
               window.location.href = paymentResponse.data.data.payment_url;
             } else {
               toast.error('Failed to initialize Remita payment. Please try again.');
@@ -242,10 +252,12 @@ const Checkout = () => {
             }
           } catch (paymentError) {
             console.error('Remita payment initialization error:', paymentError);
-            toast.error('Failed to initialize payment. Your order has been created but payment is pending.');
+            console.error('Error details:', paymentError.response?.data);
+            toast.error(paymentError.response?.data?.message || 'Failed to initialize payment. Your order has been created but payment is pending.');
             setOrderPlaced(true);
             dispatch(clearCart());
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            setLoading(false);
           }
         } else {
           // For cash or bank transfer, just show success
