@@ -1,9 +1,24 @@
 import { createSlice } from '@reduxjs/toolkit';
 
+// Get cart key based on user
+const getCartKey = () => {
+    try {
+        const authUser = localStorage.getItem('authUser');
+        if (authUser) {
+            const user = JSON.parse(authUser);
+            return `cart_${user._id || user.id || 'guest'}`;
+        }
+    } catch (error) {
+        console.error('Error getting user for cart key:', error);
+    }
+    return 'cart_guest';
+};
+
 // Load cart from localStorage
 const loadCartFromStorage = () => {
     try {
-        const cartData = localStorage.getItem('cart');
+        const cartKey = getCartKey();
+        const cartData = localStorage.getItem(cartKey);
         if (cartData) {
             return JSON.parse(cartData);
         }
@@ -16,7 +31,8 @@ const loadCartFromStorage = () => {
 // Save cart to localStorage
 const saveCartToStorage = (cart) => {
     try {
-        localStorage.setItem('cart', JSON.stringify(cart));
+        const cartKey = getCartKey();
+        localStorage.setItem(cartKey, JSON.stringify(cart));
     } catch (error) {
         console.error('Error saving cart to localStorage:', error);
     }
@@ -144,6 +160,45 @@ const cartSlice = createSlice({
             state.items = cart.items;
             state.total = cart.total;
             state.itemCount = cart.itemCount;
+        },
+
+        // Transfer guest cart to user cart when logging in
+        transferGuestCart: (state) => {
+            try {
+                // Load guest cart
+                const guestCartData = localStorage.getItem('cart_guest');
+                if (guestCartData) {
+                    const guestCart = JSON.parse(guestCartData);
+
+                    // If guest cart has items, merge with current user cart
+                    if (guestCart.items && guestCart.items.length > 0) {
+                        // Merge items (avoid duplicates)
+                        guestCart.items.forEach(guestItem => {
+                            const existingItem = state.items.find(item => item.productId === guestItem.productId);
+                            if (existingItem) {
+                                // Add quantities together
+                                existingItem.quantity += guestItem.quantity;
+                            } else {
+                                // Add new item
+                                state.items.push(guestItem);
+                            }
+                        });
+
+                        // Recalculate totals
+                        const { total, itemCount } = calculateTotals(state.items);
+                        state.total = total;
+                        state.itemCount = itemCount;
+
+                        // Save merged cart to user's cart
+                        saveCartToStorage(state);
+
+                        // Clear guest cart
+                        localStorage.removeItem('cart_guest');
+                    }
+                }
+            } catch (error) {
+                console.error('Error transferring guest cart:', error);
+            }
         }
     }
 });
@@ -155,7 +210,8 @@ export const {
     incrementQuantity,
     decrementQuantity,
     clearCart,
-    loadCart
+    loadCart,
+    transferGuestCart
 } = cartSlice.actions;
 
 export default cartSlice.reducer;

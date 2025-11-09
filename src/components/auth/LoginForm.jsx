@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { loginUser, clearError } from '../../redux/slices/authSlice';
+import { transferGuestCart } from '../../redux/slices/cartSlice';
 import { Mail, Lock, Eye, EyeOff, Loader } from 'lucide-react';
 import { toast } from 'react-toastify';
 
@@ -25,8 +26,12 @@ const LoginForm = () => {
   const handleSubmit = async (values, { setSubmitting }) => {
     try {
       const result = await dispatch(loginUser(values)).unwrap();
+
+      // Transfer guest cart to user cart
+      dispatch(transferGuestCart());
+
       toast.success('Login successful!');
-      
+
       // Redirect based on role
       if (result.user.role === 'admin') {
         navigate('/admin/dashboard');

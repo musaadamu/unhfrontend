@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { registerUser } from '../../redux/slices/authSlice';
+import { transferGuestCart } from '../../redux/slices/cartSlice';
 import { User, Mail, Lock, Phone, Eye, EyeOff, Loader } from 'lucide-react';
 import { toast } from 'react-toastify';
 
@@ -36,6 +37,10 @@ const RegisterForm = () => {
     try {
       const { confirmPassword, ...userData } = values;
       const result = await dispatch(registerUser(userData)).unwrap();
+
+      // Transfer guest cart to user cart
+      dispatch(transferGuestCart());
+
       toast.success('Registration successful!');
       navigate('/');
     } catch (err) {

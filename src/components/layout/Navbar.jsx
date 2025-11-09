@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../redux/slices/authSlice';
+import { clearCart } from '../../redux/slices/cartSlice';
 import { Zap, User, LogOut, ShoppingCart, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
@@ -14,6 +15,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     dispatch(logout());
+    dispatch(clearCart());
     toast.success('Logged out successfully');
     navigate('/');
     setMobileMenuOpen(false);

@@ -15,7 +15,7 @@ const initialState = {
 // Async Thunk for registering a user
 export const registerUser = createAsyncThunk(
     'auth/register',
-    async (userData, { rejectWithValue }) => {
+    async (userData, { rejectWithValue, dispatch }) => {
         try {
             console.log('Registering user with data:', userData);
             const response = await api.auth.register(userData);
@@ -45,7 +45,7 @@ export const registerUser = createAsyncThunk(
 // Async Thunk for logging in a user
 export const loginUser = createAsyncThunk(
     'auth/login',
-    async (credentials, { rejectWithValue }) => {
+    async (credentials, { rejectWithValue, dispatch }) => {
         try {
             console.log('Logging in with credentials:', credentials);
             const response = await api.auth.login(credentials);
@@ -123,6 +123,19 @@ const authSlice = createSlice({
     initialState,
     reducers: {
         logout(state) {
+            // Get current user's cart key before clearing user data
+            const authUser = localStorage.getItem('authUser');
+            if (authUser) {
+                try {
+                    const user = JSON.parse(authUser);
+                    const cartKey = `cart_${user._id || user.id || 'guest'}`;
+                    // Clear user's cart
+                    localStorage.removeItem(cartKey);
+                } catch (error) {
+                    console.error('Error clearing user cart:', error);
+                }
+            }
+
             state.user = null;
             state.token = null;
             state.loading = false;

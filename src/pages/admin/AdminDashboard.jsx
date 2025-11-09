@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../redux/slices/authSlice';
+import { clearCart } from '../../redux/slices/cartSlice';
 import axios from 'axios';
 import { API_URL } from '../../config/api';
 
@@ -63,6 +64,7 @@ const AdminDashboard = () => {
 
   const handleLogout = () => {
     dispatch(logout());
+    dispatch(clearCart());
   };
 
   const isActive = (path, exact = false) => {
