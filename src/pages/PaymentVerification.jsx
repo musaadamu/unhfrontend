@@ -13,17 +13,29 @@ const PaymentVerification = () => {
 
   useEffect(() => {
     const verifyPayment = async () => {
-      const reference = searchParams.get('reference');
-      
-      if (!reference) {
+      const reference = searchParams.get('reference'); // Paystack reference
+      const rrr = searchParams.get('rrr'); // Remita RRR
+      const orderRef = searchParams.get('orderRef'); // Remita order reference
+
+      if (!reference && !rrr && !orderRef) {
         setStatus('failed');
         setError('No payment reference found');
         return;
       }
 
       try {
-        const response = await axios.get(`${API_URL}/api/payment/verify/${reference}`);
-        
+        let response;
+
+        // Check if it's Paystack or Remita
+        if (reference) {
+          // Paystack verification
+          response = await axios.get(`${API_URL}/api/payment/paystack/verify/${reference}`);
+        } else if (rrr || orderRef) {
+          // Remita verification
+          const remitaRef = rrr || orderRef;
+          response = await axios.get(`${API_URL}/api/payment/remita/verify/${remitaRef}`);
+        }
+
         if (response.data.success) {
           setStatus('success');
           setPaymentData(response.data.data);

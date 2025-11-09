@@ -171,10 +171,10 @@ const Checkout = () => {
         setOrderNumber(order.orderNumber);
 
         // If payment method is card (Paystack), initialize payment
-        if (formData.paymentMethod === 'card') {
+        if (formData.paymentMethod === 'paystack') {
           try {
             const paymentResponse = await axios.post(
-              `${API_URL}/api/payment/initialize`,
+              `${API_URL}/api/payment/paystack/initialize`,
               {
                 email: formData.email,
                 amount: grandTotal,
@@ -213,6 +213,40 @@ const Checkout = () => {
             dispatch(clearCart());
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }
+        } else if (formData.paymentMethod === 'remita') {
+          // Initialize Remita payment
+          try {
+            const paymentResponse = await axios.post(
+              `${API_URL}/api/payment/remita/initialize`,
+              {
+                email: formData.email,
+                amount: grandTotal,
+                orderId: order._id,
+                customerName: formData.fullName,
+                customerPhone: formData.phone
+              },
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+
+            if (paymentResponse.data.success) {
+              // Redirect to Remita payment page
+              window.location.href = paymentResponse.data.data.payment_url;
+            } else {
+              toast.error('Failed to initialize Remita payment. Please try again.');
+              setLoading(false);
+            }
+          } catch (paymentError) {
+            console.error('Remita payment initialization error:', paymentError);
+            toast.error('Failed to initialize payment. Your order has been created but payment is pending.');
+            setOrderPlaced(true);
+            dispatch(clearCart());
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
         } else {
           // For cash or bank transfer, just show success
           setOrderPlaced(true);
@@ -225,7 +259,7 @@ const Checkout = () => {
       console.error('Error placing order:', error);
       toast.error(error.response?.data?.message || 'Failed to place order. Please try again.');
     } finally {
-      if (formData.paymentMethod !== 'card') {
+      if (formData.paymentMethod !== 'paystack' && formData.paymentMethod !== 'remita') {
         setLoading(false);
       }
     }
@@ -470,8 +504,8 @@ const Checkout = () => {
                     <input
                       type="radio"
                       name="paymentMethod"
-                      value="card"
-                      checked={formData.paymentMethod === 'card'}
+                      value="paystack"
+                      checked={formData.paymentMethod === 'paystack'}
                       onChange={handleInputChange}
                       className="w-5 h-5 text-blue-600"
                     />
@@ -482,7 +516,27 @@ const Checkout = () => {
                           Secure
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600">Pay securely with card, bank transfer, or USSD</p>
+                      <p className="text-sm text-gray-600">Pay with card, bank transfer, or USSD</p>
+                    </div>
+                  </label>
+
+                  <label className="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="remita"
+                      checked={formData.paymentMethod === 'remita'}
+                      onChange={handleInputChange}
+                      className="w-5 h-5 text-blue-600"
+                    />
+                    <div className="ml-4 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-gray-800">Pay with Remita</p>
+                        <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-medium">
+                          Secure
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600">Pay with card, bank account, or USSD</p>
                     </div>
                   </label>
                 </div>
