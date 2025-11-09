@@ -31,6 +31,7 @@ import RegisterForm from './components/auth/RegisterForm';
 import ProfilePage from './pages/ProfilePage';
 import Services from './pages/Services';
 import About from './pages/About';
+import PaymentVerification from './pages/PaymentVerification';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -73,6 +74,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/payment/verify" element={<PaymentVerification />} />
 
           {/* Admin Routes */}
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />

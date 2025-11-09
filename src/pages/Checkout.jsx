@@ -129,7 +129,7 @@ const Checkout = () => {
 
     try {
       const token = localStorage.getItem('token');
-      
+
       // Prepare order data
       const orderData = {
         items: items.map(item => ({
@@ -167,19 +167,67 @@ const Checkout = () => {
       );
 
       if (response.data.success) {
-        setOrderNumber(response.data.order.orderNumber);
-        setOrderPlaced(true);
-        dispatch(clearCart());
-        toast.success('Order placed successfully!');
-        
-        // Scroll to top to show success message
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        const order = response.data.order;
+        setOrderNumber(order.orderNumber);
+
+        // If payment method is card (Paystack), initialize payment
+        if (formData.paymentMethod === 'card') {
+          try {
+            const paymentResponse = await axios.post(
+              `${API_URL}/api/payment/initialize`,
+              {
+                email: formData.email,
+                amount: grandTotal,
+                orderId: order._id,
+                metadata: {
+                  orderNumber: order.orderNumber,
+                  customerName: formData.fullName,
+                  custom_fields: [
+                    {
+                      display_name: 'Customer Name',
+                      variable_name: 'customer_name',
+                      value: formData.fullName
+                    }
+                  ]
+                }
+              },
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+
+            if (paymentResponse.data.success) {
+              // Redirect to Paystack payment page
+              window.location.href = paymentResponse.data.data.authorization_url;
+            } else {
+              toast.error('Failed to initialize payment. Please try again.');
+              setLoading(false);
+            }
+          } catch (paymentError) {
+            console.error('Payment initialization error:', paymentError);
+            toast.error('Failed to initialize payment. Your order has been created but payment is pending.');
+            setOrderPlaced(true);
+            dispatch(clearCart());
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        } else {
+          // For cash or bank transfer, just show success
+          setOrderPlaced(true);
+          dispatch(clearCart());
+          toast.success('Order placed successfully!');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
       }
     } catch (error) {
       console.error('Error placing order:', error);
       toast.error(error.response?.data?.message || 'Failed to place order. Please try again.');
     } finally {
-      setLoading(false);
+      if (formData.paymentMethod !== 'card') {
+        setLoading(false);
+      }
     }
   };
 
@@ -427,9 +475,14 @@ const Checkout = () => {
                       onChange={handleInputChange}
                       className="w-5 h-5 text-blue-600"
                     />
-                    <div className="ml-4">
-                      <p className="font-semibold text-gray-800">Debit/Credit Card</p>
-                      <p className="text-sm text-gray-600">Pay securely with your card</p>
+                    <div className="ml-4 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-gray-800">Pay with Paystack</p>
+                        <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium">
+                          Secure
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600">Pay securely with card, bank transfer, or USSD</p>
                     </div>
                   </label>
                 </div>
