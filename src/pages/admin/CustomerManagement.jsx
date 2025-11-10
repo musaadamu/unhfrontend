@@ -122,9 +122,8 @@ const CustomerManagement = () => {
   const handleUpdateCustomer = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
       const response = await axios.put(
-        `http://localhost:5000/api/users/${selectedCustomer._id}`,
+        `${API_URL}/api/users/${selectedCustomer._id}`,
         editForm,
         {
           headers: { Authorization: `Bearer ${token}` }

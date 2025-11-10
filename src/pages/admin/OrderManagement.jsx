@@ -18,6 +18,7 @@ import {
   Mail,
   X
 } from 'lucide-react';
+import { API_URL } from '../../config/api';
 
 const OrderManagement = () => {
   const [orders, setOrders] = useState([]);

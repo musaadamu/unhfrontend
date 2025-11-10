@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Upload, Trash2 } from 'lucide-react';
 import axios from 'axios';
+import { API_URL } from '../../config/api';
 
 const ProductFormModal = ({ product, categories, onClose, token }) => {
   const [formData, setFormData] = useState({
@@ -118,7 +119,7 @@ const ProductFormModal = ({ product, categories, onClose, token }) => {
       if (product) {
         // Update existing product
         await axios.put(
-          `http://localhost:5000/api/products/${product._id}`,
+          `${API_URL}/api/products/${product._id}`,
           productData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -126,7 +127,7 @@ const ProductFormModal = ({ product, categories, onClose, token }) => {
       } else {
         // Create new product
         await axios.post(
-          'http://localhost:5000/api/products',
+          `${API_URL}/api/products`,
           productData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -201,8 +202,9 @@ const ProductFormModal = ({ product, categories, onClose, token }) => {
                 onChange={handleChange}
                 required
                 min="0"
-                step="0.01"
+                step="any"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter price (e.g., 250000)"
               />
             </div>
 
@@ -216,8 +218,9 @@ const ProductFormModal = ({ product, categories, onClose, token }) => {
                 value={formData.compareAtPrice}
                 onChange={handleChange}
                 min="0"
-                step="0.01"
+                step="any"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter original price (optional)"
               />
             </div>
 

@@ -24,7 +24,7 @@ const CategoryManagement = () => {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/categories');
+      const response = await axios.get(`${API_URL}/api/categories`);
       setCategories(response.data.categories || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -36,7 +36,7 @@ const CategoryManagement = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/categories/${id}`, {
+      await axios.delete(`${API_URL}/api/categories/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert('Category deleted successfully');
@@ -77,7 +77,7 @@ const CategoryManagement = () => {
       if (editingCategory) {
         // Update existing category
         await axios.put(
-          `http://localhost:5000/api/categories/${editingCategory._id}`,
+          `${API_URL}/api/categories/${editingCategory._id}`,
           formData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -85,7 +85,7 @@ const CategoryManagement = () => {
       } else {
         // Create new category
         await axios.post(
-          'http://localhost:5000/api/categories',
+          `${API_URL}/api/categories`,
           formData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
