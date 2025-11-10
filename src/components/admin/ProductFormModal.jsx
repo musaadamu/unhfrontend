@@ -91,13 +91,22 @@ const ProductFormModal = ({ product, categories, onClose, token }) => {
     setLoading(true);
 
     try {
-      // Prepare images array
+      // Normalize existing images (they might be strings or objects) into the
+      // shape expected by the backend: { url, alt, isPrimary }
+      const normalizedExistingImages = (formData.images || []).map(img =>
+        typeof img === 'string' ? { url: img, alt: formData.name, isPrimary: false } : img
+      );
+
+      // Prepare images array by combining normalized existing images with any
+      // newly selected files (we only set url to the filename here; uploads are
+      // handled elsewhere).
       const images = [
-        ...formData.images,
+        ...normalizedExistingImages,
         ...imageFiles.map((file, index) => ({
           url: file.name,
           alt: formData.name,
-          isPrimary: formData.images.length === 0 && index === 0
+          // If there are no existing images, mark the first uploaded as primary
+          isPrimary: normalizedExistingImages.length === 0 && index === 0
         }))
       ];
 
@@ -115,6 +124,13 @@ const ProductFormModal = ({ product, categories, onClose, token }) => {
         images,
         specifications
       };
+
+      // Avoid sending empty sku strings to the backend: an empty string will
+      // be treated as a value and can trigger unique-index duplicate errors
+      // (multiple products with sku = ""). Remove the field instead.
+      if ('sku' in productData && (productData.sku === '' || productData.sku == null)) {
+        delete productData.sku;
+      }
 
       if (product) {
         // Update existing product
