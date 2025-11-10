@@ -18,6 +18,7 @@ import {
   Calendar,
   Shield
 } from 'lucide-react';
+import { API_URL } from '../../config/api';
 
 const CustomerManagement = () => {
   const [customers, setCustomers] = useState([]);
@@ -58,7 +59,7 @@ const CustomerManagement = () => {
       params.append('limit', '100');
 
       const response = await axios.get(
-        `http://localhost:5000/api/users?${params.toString()}`,
+        `${API_URL}/api/users?${params.toString()}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -91,7 +92,7 @@ const CustomerManagement = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `http://localhost:5000/api/users/${customer._id}`,
+        `${API_URL}/api/users/${customer._id}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -146,7 +147,7 @@ const CustomerManagement = () => {
       try {
         const token = localStorage.getItem('token');
         const response = await axios.delete(
-          `http://localhost:5000/api/users/${customerId}`,
+          `${API_URL}/api/users/${customerId}`,
           {
             headers: { Authorization: `Bearer ${token}` }
           }

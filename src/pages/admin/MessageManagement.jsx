@@ -16,6 +16,7 @@ import {
   Clock,
   AlertCircle
 } from 'lucide-react';
+import { API_URL } from '../../config/api';
 
 const MessageManagement = () => {
   const [messages, setMessages] = useState([]);
@@ -46,7 +47,7 @@ const MessageManagement = () => {
       params.append('limit', '100');
 
       const response = await axios.get(
-        `http://localhost:5000/api/contact?${params.toString()}`,
+        `${API_URL}/api/contact?${params.toString()}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -78,7 +79,7 @@ const MessageManagement = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `http://localhost:5000/api/contact/${message._id}`,
+        `${API_URL}/api/contact/${message._id}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -103,7 +104,7 @@ const MessageManagement = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.put(
-        `http://localhost:5000/api/contact/${messageId}/reply`,
+        `${API_URL}/api/contact/${messageId}/reply`,
         { reply, status },
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -131,7 +132,7 @@ const MessageManagement = () => {
       try {
         const token = localStorage.getItem('token');
         const response = await axios.delete(
-          `http://localhost:5000/api/contact/${messageId}`,
+          `${API_URL}/api/contact/${messageId}`,
           {
             headers: { Authorization: `Bearer ${token}` }
           }

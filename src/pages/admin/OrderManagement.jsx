@@ -51,7 +51,7 @@ const OrderManagement = () => {
       params.append('limit', '100');
 
       const response = await axios.get(
-        `http://localhost:5000/api/orders?${params.toString()}`,
+        `${API_URL}/api/orders?${params.toString()}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -84,7 +84,7 @@ const OrderManagement = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.put(
-        `http://localhost:5000/api/orders/${orderId}/status`,
+        `${API_URL}/api/orders/${orderId}/status`,
         { status: newStatus },
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -108,7 +108,7 @@ const OrderManagement = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.put(
-        `http://localhost:5000/api/orders/${orderId}/payment`,
+        `${API_URL}/api/orders/${orderId}/payment`,
         { paymentStatus: newStatus },
         {
           headers: { Authorization: `Bearer ${token}` }
