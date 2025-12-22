@@ -259,6 +259,46 @@ const Checkout = () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
             setLoading(false);
           }
+        } else if (formData.paymentMethod === 'flutterwave') {
+          // Initialize Flutterwave payment
+          try {
+            console.log('Initializing Flutterwave payment...');
+            const paymentResponse = await axios.post(
+              `${API_URL}/api/payment/flutterwave/initialize`,
+              {
+                email: formData.email,
+                amount: grandTotal,
+                orderId: order._id,
+                customerName: formData.fullName,
+                customerPhone: formData.phone
+              },
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+
+            console.log('Flutterwave response:', paymentResponse.data);
+
+            if (paymentResponse.data.success && paymentResponse.data.data.payment_url) {
+              // Redirect to Flutterwave payment page
+              console.log('Redirecting to Flutterwave:', paymentResponse.data.data.payment_url);
+              window.location.href = paymentResponse.data.data.payment_url;
+            } else {
+              toast.error('Failed to initialize Flutterwave payment. Please try again.');
+              setLoading(false);
+            }
+          } catch (paymentError) {
+            console.error('Flutterwave payment initialization error:', paymentError);
+            console.error('Error details:', paymentError.response?.data);
+            toast.error(paymentError.response?.data?.message || 'Failed to initialize payment. Your order has been created but payment is pending.');
+            setOrderPlaced(true);
+            dispatch(clearCart());
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setLoading(false);
+          }
         } else {
           // For cash or bank transfer, just show success
           setOrderPlaced(true);
@@ -271,7 +311,9 @@ const Checkout = () => {
       console.error('Error placing order:', error);
       toast.error(error.response?.data?.message || 'Failed to place order. Please try again.');
     } finally {
-      if (formData.paymentMethod !== 'paystack' && formData.paymentMethod !== 'remita') {
+      if (formData.paymentMethod !== 'paystack' &&
+          formData.paymentMethod !== 'remita' &&
+          formData.paymentMethod !== 'flutterwave') {
         setLoading(false);
       }
     }
@@ -549,6 +591,26 @@ const Checkout = () => {
                         </span>
                       </div>
                       <p className="text-sm text-gray-600">Pay with card, bank account, or USSD</p>
+                    </div>
+                  </label>
+
+                  <label className="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="flutterwave"
+                      checked={formData.paymentMethod === 'flutterwave'}
+                      onChange={handleInputChange}
+                      className="w-5 h-5 text-blue-600"
+                    />
+                    <div className="ml-4 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-gray-800">Pay with Flutterwave</p>
+                        <span className="bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded-full font-medium">
+                          Secure
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600">Pay with card, bank transfer, USSD, or mobile money</p>
                     </div>
                   </label>
                 </div>

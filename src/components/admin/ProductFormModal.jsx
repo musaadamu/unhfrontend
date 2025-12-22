@@ -10,34 +10,54 @@ const ProductFormModal = ({ product, categories, onClose, token }) => {
     price: '',
     compareAtPrice: '',
     category: '',
+    subcategory: '',
     stock: '',
     brand: '',
     sku: '',
+    modelNumber: '',
     isFeatured: false,
     isActive: true,
     images: [],
-    specifications: {},
-    warranty: { duration: '', details: '' }
+    specifications: [],
+    warranty: { duration: '', details: '' },
+    tags: ''
   });
   const [imageFiles, setImageFiles] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [newSpecKey, setNewSpecKey] = useState('');
+  const [newSpecValue, setNewSpecValue] = useState('');
+  const [imageFilename, setImageFilename] = useState('');
+
+  // Debug: Log categories when component mounts or categories change
+  useEffect(() => {
+    console.log('ProductFormModal - Categories received:', categories);
+    console.log('ProductFormModal - Categories count:', categories?.length || 0);
+  }, [categories]);
 
   useEffect(() => {
     if (product) {
+      // Convert specifications array to array format for editing
+      const specs = Array.isArray(product.specifications)
+        ? product.specifications
+        : Object.entries(product.specifications || {}).map(([name, value]) => ({ name, value }));
+
       setFormData({
         name: product.name || '',
         description: product.description || '',
         price: product.price || '',
         compareAtPrice: product.compareAtPrice || '',
         category: product.category?._id || '',
+        subcategory: product.subcategory || '',
         stock: product.stock || '',
         brand: product.brand || '',
         sku: product.sku || '',
+        modelNumber: product.modelNumber || '',
         isFeatured: product.isFeatured || false,
         isActive: product.isActive !== undefined ? product.isActive : true,
         images: product.images || [],
-        specifications: product.specifications || {},
-        warranty: product.warranty || { duration: '', details: '' }
+        specifications: specs,
+        warranty: product.warranty || { duration: '', details: '' },
+        tags: Array.isArray(product.tags) ? product.tags.join(', ') : ''
       });
     }
   }, [product]);
@@ -50,13 +70,21 @@ const ProductFormModal = ({ product, categories, onClose, token }) => {
     }));
   };
 
-  const handleSpecChange = (key, value) => {
+  const addSpecification = () => {
+    if (newSpecKey.trim() && newSpecValue.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        specifications: [...prev.specifications, { name: newSpecKey.trim(), value: newSpecValue.trim() }]
+      }));
+      setNewSpecKey('');
+      setNewSpecValue('');
+    }
+  };
+
+  const removeSpecification = (index) => {
     setFormData(prev => ({
       ...prev,
-      specifications: {
-        ...prev.specifications,
-        [key]: value
-      }
+      specifications: prev.specifications.filter((_, i) => i !== index)
     }));
   };
 
@@ -86,6 +114,21 @@ const ProductFormModal = ({ product, categories, onClose, token }) => {
     }));
   };
 
+  const addImageByFilename = () => {
+    if (imageFilename.trim()) {
+      const newImage = {
+        url: imageFilename.trim(),
+        alt: formData.name || 'Product image',
+        isPrimary: formData.images.length === 0
+      };
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, newImage]
+      }));
+      setImageFilename('');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -93,8 +136,10 @@ const ProductFormModal = ({ product, categories, onClose, token }) => {
     try {
       // Normalize existing images (they might be strings or objects) into the
       // shape expected by the backend: { url, alt, isPrimary }
-      const normalizedExistingImages = (formData.images || []).map(img =>
-        typeof img === 'string' ? { url: img, alt: formData.name, isPrimary: false } : img
+      const normalizedExistingImages = (formData.images || []).map((img, index) =>
+        typeof img === 'string'
+          ? { url: img, alt: formData.name, isPrimary: index === 0 }
+          : img
       );
 
       // Prepare images array by combining normalized existing images with any
@@ -110,11 +155,10 @@ const ProductFormModal = ({ product, categories, onClose, token }) => {
         }))
       ];
 
-      // Convert specifications object to array format if needed
-      const specifications = Object.entries(formData.specifications).map(([name, value]) => ({
-        name,
-        value
-      }));
+      // Process tags
+      const tags = formData.tags
+        ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+        : [];
 
       const productData = {
         ...formData,
@@ -122,14 +166,22 @@ const ProductFormModal = ({ product, categories, onClose, token }) => {
         compareAtPrice: formData.compareAtPrice ? Number(formData.compareAtPrice) : undefined,
         stock: Number(formData.stock),
         images,
-        specifications
+        specifications: formData.specifications,
+        tags
       };
 
-      // Avoid sending empty sku strings to the backend: an empty string will
-      // be treated as a value and can trigger unique-index duplicate errors
-      // (multiple products with sku = ""). Remove the field instead.
+      // Remove empty optional fields
       if ('sku' in productData && (productData.sku === '' || productData.sku == null)) {
         delete productData.sku;
+      }
+      if ('subcategory' in productData && !productData.subcategory) {
+        delete productData.subcategory;
+      }
+      if ('modelNumber' in productData && !productData.modelNumber) {
+        delete productData.modelNumber;
+      }
+      if ('compareAtPrice' in productData && !productData.compareAtPrice) {
+        delete productData.compareAtPrice;
       }
 
       if (product) {
@@ -252,10 +304,33 @@ const ProductFormModal = ({ product, categories, onClose, token }) => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Select Category</option>
-                {categories.map(cat => (
-                  <option key={cat._id} value={cat._id}>{cat.name}</option>
-                ))}
+                {categories && categories.length > 0 ? (
+                  categories.map(cat => (
+                    <option key={cat._id} value={cat._id}>{cat.name}</option>
+                  ))
+                ) : (
+                  <option value="" disabled>Loading categories...</option>
+                )}
               </select>
+              {(!categories || categories.length === 0) && (
+                <p className="text-sm text-red-600 mt-1">
+                  ⚠️ No categories available. Please refresh the page or contact admin.
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Subcategory
+              </label>
+              <input
+                type="text"
+                name="subcategory"
+                value={formData.subcategory}
+                onChange={handleChange}
+                placeholder="e.g., Switches, Sockets, etc."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
 
             <div>
@@ -282,6 +357,7 @@ const ProductFormModal = ({ product, categories, onClose, token }) => {
                 name="brand"
                 value={formData.brand}
                 onChange={handleChange}
+                placeholder="e.g., Samsung, LG, etc."
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
@@ -295,9 +371,40 @@ const ProductFormModal = ({ product, categories, onClose, token }) => {
                 name="sku"
                 value={formData.sku}
                 onChange={handleChange}
+                placeholder="Stock Keeping Unit"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Model Number
+              </label>
+              <input
+                type="text"
+                name="modelNumber"
+                value={formData.modelNumber}
+                onChange={handleChange}
+                placeholder="Product model number"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          {/* Tags */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tags (comma-separated)
+            </label>
+            <input
+              type="text"
+              name="tags"
+              value={formData.tags}
+              onChange={handleChange}
+              placeholder="e.g., energy-efficient, smart, wireless"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <p className="text-xs text-gray-500 mt-1">Separate tags with commas</p>
           </div>
 
           {/* Images */}
@@ -319,9 +426,31 @@ const ProductFormModal = ({ product, categories, onClose, token }) => {
                 className="flex flex-col items-center justify-center cursor-pointer"
               >
                 <Upload className="text-gray-400 mb-2" size={32} />
-                <p className="text-sm text-gray-600">Click to upload images</p>
-                <p className="text-xs text-gray-400 mt-1">PNG, JPG, JFIF up to 10MB</p>
+                <p className="text-sm text-gray-600">Click to upload images or enter filename below</p>
+                <p className="text-xs text-gray-400 mt-1">PNG, JPG, JFIF - Place files in frontend/public/images/products/</p>
               </label>
+
+              {/* Manual Image Filename Input */}
+              <div className="mt-4 flex gap-2">
+                <input
+                  type="text"
+                  value={imageFilename}
+                  onChange={(e) => setImageFilename(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addImageByFilename())}
+                  placeholder="Or enter image filename (e.g., globe1.jfif)"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <button
+                  type="button"
+                  onClick={addImageByFilename}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
+                >
+                  Add
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                💡 Tip: Use existing images like globe1.jfif, socket1.jfif, solar1.jfif, etc.
+              </p>
 
               {/* Existing Images */}
               {formData.images.length > 0 && (
@@ -334,6 +463,9 @@ const ProductFormModal = ({ product, categories, onClose, token }) => {
                           src={`/images/products/${img.url || img}`}
                           alt={img.alt || 'Product'}
                           className="w-full h-20 object-cover rounded-lg"
+                          onError={(e) => {
+                            e.target.src = '/images/products/placeholder.jpg';
+                          }}
                         />
                         <button
                           type="button"
@@ -342,6 +474,11 @@ const ProductFormModal = ({ product, categories, onClose, token }) => {
                         >
                           <Trash2 size={14} />
                         </button>
+                        {img.isPrimary && (
+                          <span className="absolute bottom-1 left-1 px-2 py-0.5 bg-blue-500 text-white text-xs rounded">
+                            Primary
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -370,6 +507,89 @@ const ProductFormModal = ({ product, categories, onClose, token }) => {
                   </div>
                 </div>
               )}
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              💡 Tip: Place your image files in <code className="bg-gray-100 px-1 rounded">frontend/public/images/products/</code>
+              and they will be automatically available. Just enter the filename (e.g., switch1.jfif).
+            </p>
+          </div>
+
+          {/* Specifications */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Product Specifications
+            </label>
+            <div className="border border-gray-300 rounded-lg p-4">
+              {/* Existing Specifications */}
+              {formData.specifications.length > 0 && (
+                <div className="mb-4 space-y-2">
+                  {formData.specifications.map((spec, index) => (
+                    <div key={index} className="flex items-center gap-2 bg-gray-50 p-2 rounded">
+                      <span className="font-medium text-sm flex-1">{spec.name}:</span>
+                      <span className="text-sm flex-1">{spec.value}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeSpecification(index)}
+                        className="p-1 text-red-600 hover:bg-red-50 rounded"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add New Specification */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newSpecKey}
+                  onChange={(e) => setNewSpecKey(e.target.value)}
+                  placeholder="Spec name (e.g., Voltage)"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+                <input
+                  type="text"
+                  value={newSpecValue}
+                  onChange={(e) => setNewSpecValue(e.target.value)}
+                  placeholder="Value (e.g., 220V)"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={addSpecification}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Warranty */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Warranty Information
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <input
+                  type="text"
+                  value={formData.warranty.duration}
+                  onChange={(e) => handleWarrantyChange('duration', e.target.value)}
+                  placeholder="Duration (e.g., 1 Year, 6 Months)"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  value={formData.warranty.details}
+                  onChange={(e) => handleWarrantyChange('details', e.target.value)}
+                  placeholder="Details (e.g., Manufacturer warranty)"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
             </div>
           </div>
 

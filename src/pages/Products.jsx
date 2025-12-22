@@ -17,6 +17,10 @@ const Products = () => {
   const [selectedSubcategory, setSelectedSubcategory] = useState('');
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [sortBy, setSortBy] = useState('name');
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const categories = [
     'All',
@@ -31,31 +35,57 @@ const Products = () => {
   ];
 
   useEffect(() => {
-    fetchProducts();
+    setCurrentPage(1); // Reset to page 1 when filters change
+    fetchProducts(1, true);
   }, [selectedCategory, selectedSubcategory, sortBy]);
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (page = 1, reset = false) => {
     try {
-      setLoading(true);
-      let url = `${API_URL}/api/products?`;
+      if (reset) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+
+      // Fetch ALL products by setting a high limit
+      let url = `${API_URL}/api/products?limit=1000&page=${page}`;
 
       if (selectedCategory && selectedCategory !== 'All') {
-        url += `category=${selectedCategory}&`;
+        url += `&category=${selectedCategory}`;
       }
       if (selectedSubcategory) {
-        url += `subcategory=${selectedSubcategory}&`;
+        url += `&subcategory=${selectedSubcategory}`;
       }
       if (sortBy) {
-        url += `sort=${sortBy}&`;
+        url += `&sort=${sortBy}`;
       }
 
       const response = await axios.get(url);
       console.log('Products API Response:', response.data); // Debug log
-      setProducts(response.data.products || response.data.data || []);
+
+      const newProducts = response.data.products || response.data.data || [];
+
+      if (reset) {
+        setProducts(newProducts);
+      } else {
+        setProducts(prev => [...prev, ...newProducts]);
+      }
+
+      setTotalProducts(response.data.total || newProducts.length);
+      setTotalPages(response.data.pages || 1);
+      setCurrentPage(page);
     } catch (error) {
       console.error('Error fetching products:', error);
+      toast.error('Failed to load products');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMoreProducts = () => {
+    if (currentPage < totalPages) {
+      fetchProducts(currentPage + 1, false);
     }
   };
 
@@ -186,8 +216,13 @@ const Products = () => {
           <main className="flex-1">
             <div className="mb-6 flex justify-between items-center">
               <p className="text-gray-600">
-                Showing {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
+                Showing <span className="font-semibold text-blue-600">{filteredProducts.length}</span> of <span className="font-semibold text-blue-600">{totalProducts}</span> product{totalProducts !== 1 ? 's' : ''}
               </p>
+              {filteredProducts.length < totalProducts && (
+                <p className="text-sm text-gray-500">
+                  (Filtered from {products.length} loaded products)
+                </p>
+              )}
             </div>
 
             {loading ? (
@@ -266,6 +301,28 @@ const Products = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Load More Button - for future pagination if needed */}
+            {!loading && currentPage < totalPages && (
+              <div className="mt-8 text-center">
+                <button
+                  onClick={loadMoreProducts}
+                  disabled={loadingMore}
+                  className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {loadingMore ? 'Loading...' : `Load More Products (${products.length} of ${totalProducts})`}
+                </button>
+              </div>
+            )}
+
+            {/* All Products Loaded Message */}
+            {!loading && filteredProducts.length > 0 && products.length >= totalProducts && (
+              <div className="mt-8 text-center">
+                <p className="text-gray-500 text-sm">
+                  ✅ All {totalProducts} products loaded
+                </p>
               </div>
             )}
           </main>

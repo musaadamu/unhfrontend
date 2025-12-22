@@ -37,9 +37,11 @@ const ProductManagement = () => {
   const fetchCategories = async () => {
     try {
       const response = await axios.get(`${API_URL}/api/categories`);
+      console.log('Categories fetched:', response.data);
       setCategories(response.data.categories || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
+      alert('Failed to fetch categories. Please refresh the page.');
     }
   };
 

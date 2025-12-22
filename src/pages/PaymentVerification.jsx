@@ -16,8 +16,10 @@ const PaymentVerification = () => {
       const reference = searchParams.get('reference'); // Paystack reference
       const rrr = searchParams.get('rrr'); // Remita RRR
       const orderRef = searchParams.get('orderRef'); // Remita order reference
+      const transactionId = searchParams.get('transaction_id'); // Flutterwave transaction ID
+      const txRef = searchParams.get('tx_ref'); // Flutterwave tx_ref
 
-      if (!reference && !rrr && !orderRef) {
+      if (!reference && !rrr && !orderRef && !transactionId && !txRef) {
         setStatus('failed');
         setError('No payment reference found');
         return;
@@ -26,7 +28,7 @@ const PaymentVerification = () => {
       try {
         let response;
 
-        // Check if it's Paystack or Remita
+        // Check which payment gateway
         if (reference) {
           // Paystack verification
           response = await axios.get(`${API_URL}/api/payment/paystack/verify/${reference}`);
@@ -34,6 +36,10 @@ const PaymentVerification = () => {
           // Remita verification
           const remitaRef = rrr || orderRef;
           response = await axios.get(`${API_URL}/api/payment/remita/verify/${remitaRef}`);
+        } else if (transactionId || txRef) {
+          // Flutterwave verification
+          const flwRef = transactionId || txRef;
+          response = await axios.get(`${API_URL}/api/payment/flutterwave/verify/${flwRef}`);
         }
 
         if (response.data.success) {
