@@ -118,7 +118,7 @@ const Home = () => {
           <div className="max-w-4xl mx-auto text-center">
             <div className="flex items-center justify-center gap-3 mb-6">
               <Zap className="w-12 h-12" />
-              <h1 className="text-5xl font-bold">UNH Electric & Electronic Enterprise</h1>
+              <h1 className="text-5xl font-bold">UNH Electrical and Electronic Enterprises</h1>
             </div>
             <p className="text-xl mb-8">
               Your trusted source for quality electrical and electronic appliances in Potiskum
@@ -126,7 +126,7 @@ const Home = () => {
             <div className="flex flex-wrap items-center justify-center gap-6 mb-8">
               <div className="flex items-center gap-2">
                 <MapPin className="w-5 h-5" />
-                <span>Potiskum Main Market</span>
+                <span>No. 9 Abuja Line Potiskum Main Market</span>
               </div>
               <a href="tel:+2348142517157" className="flex items-center gap-2 hover:text-blue-200 transition">
                 <Phone className="w-5 h-5" />
@@ -507,7 +507,7 @@ const Home = () => {
                     <div>
                       <h4 className="font-bold text-gray-800 mb-2 text-lg">Visit Our Store</h4>
                       <p className="text-gray-600 leading-relaxed">
-                        Potiskum Main Market<br />
+                        No. 9 Abuja Line Potiskum Main Market<br />
                         Potiskum, Yobe State<br />
                         Nigeria
                       </p>

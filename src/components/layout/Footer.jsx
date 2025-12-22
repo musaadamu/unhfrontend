@@ -25,7 +25,7 @@ const Footer = () => {
                 </div>
                 <div>
                   <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                    UNH Electric
+                    UNH Electrical and Electronic Enterprises
                   </h3>
                   <p className="text-xs text-gray-400">Quality & Trust</p>
                 </div>
@@ -185,7 +185,7 @@ const Footer = () => {
                   </div>
                   <div>
                     <p className="text-gray-400 leading-relaxed">
-                      Potiskum Main Market<br />
+                      No. 9 Abuja Line Potiskum Main Market<br />
                       Potiskum, Yobe State<br />
                       Nigeria
                     </p>
